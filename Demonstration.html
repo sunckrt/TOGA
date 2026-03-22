@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alert Response Assistant</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@400;500;600;700&family=Barlow:wght@400;500;600&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-deep:     #1A1A1A;
+    --bg-primary:  #323232;
+    --bg-panel:    #2C2C2C;
+    --bg-darker:   #242424;
+    --bg-modal:    #2A2A2C;
+    --border:      #484848;
+    --border-sub:  #3C3C3C;
+    --green:       #00D870;
+    --red:         #E83030;
+    --red-dark:    #B02020;
+    --cyan:        #00CFEF;
+    --blue:        #4DA6FF;
+    --orange:      #FF8C00;
+    --amber:       #FFB800;
+    --white:       #E8E8E8;
+    --muted:       #909090;
+    --label:       #B0B0B0;
+    --mono:        'Share Tech Mono', 'Courier New', monospace;
+    --cond:        'Barlow Condensed', sans-serif;
+    --sans:        'Barlow', sans-serif;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg-deep);
+    color: var(--white);
+    font-family: var(--sans);
+    font-size: 14px;
+    overflow: hidden;
+  }
+
+  /* ── TOP HEADER ── */
+  .header {
+    background: var(--bg-deep);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: stretch;
+    height: 44px;
+    position: relative;
+    z-index: 10;
+  }
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 16px;
+    border-right: 1px solid var(--border);
+    min-width: 240px;
+  }
+  .brand-logo {
+    width: 22px; height: 22px;
+    background: var(--blue);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: #fff;
+    font-family: var(--cond);
+    letter-spacing: 0.5px;
+  }
+  .brand-name {
+    font-family: var(--cond);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--label);
+  }
+  .nav-tabs {
+    display: flex;
+    align-items: stretch;
+    flex: 1;
+  }
+  .nav-tab {
+    display: flex;
+    align-items: center;
+    padding: 0 18px;
+    font-family: var(--cond);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-right: 1px solid var(--border-sub);
+    cursor: pointer;
+    position: relative;
+    transition: color 0.15s;
+  }
+  .nav-tab:hover { color: var(--white); }
+  .nav-tab.active {
+    color: var(--white);
+    background: var(--bg-panel);
+  }
+  .nav-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--cyan);
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 12px;
+    border-left: 1px solid var(--border);
+    margin-left: auto;
+  }
+  .hdr-icon {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 13px;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+  }
+  .hdr-icon:hover { background: var(--bg-panel); color: var(--white); border-color: var(--border); }
+
+  /* ── MAIN LAYOUT ── */
+  .workspace {
+    display: flex;
+    width: 100%;
+    height: calc(100vh - 44px);
+    position: relative;
+  }
+
+  /* ── DFM BACKGROUND ── */
+  .dfm-bg {
+    position: absolute;
+    inset: 0;
+    background: #F5F3EE;
+    overflow: hidden;
+  }
+  .dfm-content {
+    padding: 18px 24px;
+    opacity: 0.65;
+  }
+  .dfm-title {
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 700;
+    color: #1A1A1A;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .dfm-subtitle {
+    font-family: var(--sans);
+    font-size: 9px;
+    color: #333;
+    margin-bottom: 10px;
+    letter-spacing: 0.3px;
+  }
+  .dfm-body {
+    font-size: 8px;
+    color: #2A2A2A;
+    line-height: 1.6;
+    column-count: 2;
+    column-gap: 20px;
+    font-family: 'Times New Roman', serif;
+  }
+  .dfm-body p { margin-bottom: 5px; }
+  .dfm-schema {
+    margin: 10px 0;
+    break-inside: avoid;
+  }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 15, 15, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+  }
+
+  /* ── MAIN MODAL ── */
+  .modal {
+    width: 82%;
+    height: 86%;
+    background: var(--bg-modal);
+    border: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.8), 0 24px 60px rgba(0,0,0,0.7);
+  }
+
+  /* ── MODAL HEADER ── */
+  .modal-header {
+    background: var(--bg-deep);
+    border-bottom: 2px solid var(--red-dark);
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 52px;
+    flex-shrink: 0;
+  }
+  .warning-strip {
+    background: var(--red);
+    width: 6px;
+    height: 100%;
+    flex-shrink: 0;
+  }
+  .warning-icon {
+    width: 44px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .tri-warn { display: block; }
+  .warning-title-block {
+    padding: 0 18px;
+    flex: 1;
+  }
+  .warning-level {
+    font-family: var(--cond);
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--red);
+    text-transform: uppercase;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .warning-title {
+    font-family: var(--cond);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--red);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+  .modal-header-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 18px;
+    border-left: 1px solid var(--border);
+    height: 100%;
+  }
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .meta-label {
+    font-family: var(--cond);
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .meta-value {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--green);
+  }
+  .meta-value.red { color: var(--red); }
+  .modal-close {
+    width: 44px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px solid var(--border);
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .modal-close:hover { background: var(--bg-panel); color: var(--white); }
+
+  /* ── MODAL BODY ── */
+  .modal-body {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  /* ── LEFT: SCHEMATIC ── */
+  .schematic-panel {
+    width: 45%;
+    border-right: 1px solid var(--border);
+    background: var(--bg-darker);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .panel-header {
+    height: 32px;
+    background: var(--bg-deep);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .panel-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    flex-shrink: 0;
+  }
+  .panel-dot.active { background: var(--orange); }
+  .panel-label {
+    font-family: var(--cond);
+    font-size: 10px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: var(--label);
+  }
+  .schematic-area {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── RIGHT: CHECKLIST ── */
+  .checklist-panel {
+    flex: 1;
+    background: var(--bg-modal);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .checklist-body {
+    flex: 1;
+    padding: 12px 0;
+    overflow-y: auto;
+  }
+  .checklist-body::-webkit-scrollbar { width: 4px; }
+  .checklist-body::-webkit-scrollbar-track { background: var(--bg-darker); }
+  .checklist-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .cl-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border-sub);
+    gap: 10px;
+    position: relative;
+    transition: background 0.15s;
+  }
+  .cl-item.active {
+    background: rgba(0, 207, 239, 0.05);
+    border: 1px solid var(--cyan);
+    margin: 4px 12px;
+    border-radius: 2px;
+    padding: 9px 12px;
+  }
+  .cl-item.active + .cl-item { border-top: none; }
+  .cl-item.done { opacity: 0.5; }
+
+  .cl-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    min-width: 18px;
+    flex-shrink: 0;
+  }
+  .cl-name {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--white);
+    flex: 1;
+    letter-spacing: 0.3px;
+  }
+  .cl-name.done { text-decoration: line-through; color: var(--muted); }
+  .cl-dots {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--border);
+    letter-spacing: 3px;
+    flex: 1;
+    overflow: hidden;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .cl-action {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 60px;
+    text-align: right;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .cl-action.blue { color: var(--blue); }
+  .cl-action.cyan { color: var(--cyan); }
+  .cl-action.green { color: var(--green); }
+  .cl-action.done-color { color: var(--muted); }
+
+  .cl-status {
+    font-family: var(--cond);
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    color: var(--cyan);
+    text-transform: uppercase;
+    margin-left: 28px;
+    animation: blink 1.8s ease-in-out infinite;
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.4; }
+  }
+
+  .cl-checkbox {
+    width: 16px; height: 16px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: transparent;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .cl-checkbox:hover { border-color: var(--cyan); }
+  .cl-checkbox.checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .cl-checkbox.checked::after {
+    content: '';
+    width: 9px; height: 5px;
+    border-left: 2px solid var(--bg-deep);
+    border-bottom: 2px solid var(--bg-deep);
+    transform: rotate(-45deg) translate(0px, -1px);
+    display: block;
+  }
+
+  .cl-section-label {
+    font-family: var(--cond);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 16px 4px;
+    border-bottom: 1px solid var(--border-sub);
+  }
+
+  /* ── MODAL FOOTER ── */
+  .modal-footer {
+    height: 42px;
+    background: var(--bg-deep);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+  .footer-btn {
+    height: 26px;
+    padding: 0 14px;
+    border-radius: 2px;
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+    color: var(--label);
+    font-family: var(--cond);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s;
+  }
+  .footer-btn:hover { background: var(--bg-primary); color: var(--white); border-color: var(--muted); }
+  .footer-btn.primary {
+    background: var(--cyan);
+    color: var(--bg-deep);
+    border-color: var(--cyan);
+    font-weight: 700;
+  }
+  .footer-btn.primary:hover { opacity: 0.85; }
+  .footer-progress {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .progress-track {
+    width: 80px;
+    height: 4px;
+    background: var(--bg-panel);
+    border-radius: 2px;
+    border: 1px solid var(--border-sub);
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--cyan);
+    border-radius: 1px;
+    transition: width 0.4s ease;
+  }
+  .step-counter {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--cyan);
+  }
+
+  /* ── ATTENTION GETTER (orange circle) ── */
+  .attention-ring {
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
+  @keyframes pulse-ring {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.6; }
+  }
+
+  /* ── BOTTOM STATUS BAR ── */
+  .statusbar {
+    height: 24px;
+    background: var(--bg-deep);
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 20px;
+    position: absolute;
+    bottom: 0;
+    left: 0; right: 0;
+    z-index: 10;
+  }
+  .sb-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--cond);
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sb-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+  .sb-dot.warn { background: var(--red); animation: blink 1.2s infinite; }
+
+  /* ── ALERT CLEARED SCREEN ── */
+  .cleared-screen {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: var(--bg-modal);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    z-index: 20;
+    animation: fadein 0.4s ease;
+  }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  .cleared-screen.visible { display: flex; }
+  .cleared-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--green);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--green);
+    font-size: 28px;
+  }
+  .cleared-title {
+    font-family: var(--cond);
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--green);
+  }
+  .cleared-sub {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .cleared-meta {
+    display: flex;
+    gap: 24px;
+    margin-top: 8px;
+  }
+  .cleared-meta-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .cleared-meta-label {
+    font-family: var(--cond);
+    font-size: 9px;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .cleared-meta-value {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--green);
+  }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg-deeper); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════ TOP HEADER ═══════════════════════════ -->
+<div class="header">
+  <div class="header-brand">
+    <div class="brand-logo">ARA</div>
+    <span class="brand-name">Alert Response Assistant</span>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab">Flight Plan</div>
+    <div class="nav-tab">Map</div>
+    <div class="nav-tab">SOPs</div>
+    <div class="nav-tab active">Manual</div>
+    <div class="nav-tab">ECAM</div>
+  </div>
+  <div class="header-right">
+    <div class="hdr-icon" title="Sync">↺</div>
+    <div class="hdr-icon" title="Brightness">☀</div>
+    <div class="hdr-icon" title="Menu">≡</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════ WORKSPACE ═══════════════════════════ -->
+<div class="workspace">
+
+  <!-- DFM background -->
+  <div class="dfm-bg">
+    <div class="dfm-content">
+      <div class="dfm-title">A320 Family — Digital Flight Manual</div>
+      <div class="dfm-subtitle">FCOM 2.70.10 — Engine — Abnormal and Emergency Procedures — Rev. 47</div>
+      <div class="dfm-body">
+        <p>2.70.10.1 ENGINE FIRE DETECTION SYSTEM — The aircraft is equipped with continuous loop fire/overheat detection systems for each engine. Each loop consists of sensing elements located within the engine nacelle. The control module provides a discrete warning signal when both loops detect a fire or overheat condition simultaneously, preventing nuisance warnings.</p>
+        <p>2.70.10.2 WARNINGS AND INDICATIONS — When fire is detected, the following indications occur simultaneously: The FIRE pushbutton on the affected engine illuminates red. The MASTER WARN light flashes. The continuous repetitive chime (CRC) sounds. The ECAM displays the E/WD warning in red with the associated procedure. The ENG FIRE warning is classified as a Level 3 Warning.</p>
+        <div class="dfm-schema">
+          <svg width="100%" viewBox="0 0 320 120" style="margin:6px 0; opacity:0.7">
+            <rect x="10" y="10" width="130" height="40" rx="3" fill="none" stroke="#555" stroke-width="0.8"/>
+            <text x="75" y="25" text-anchor="middle" font-size="8" fill="#444" font-family="monospace">FIRE DETECTION LOOP A</text>
+            <text x="75" y="38" text-anchor="middle" font-size="7" fill="#666" font-family="monospace">Sensing element — Nacelle</text>
+            <rect x="10" y="62" width="130" height="40" rx="3" fill="none" stroke="#555" stroke-width="0.8"/>
+            <text x="75" y="77" text-anchor="middle" font-size="8" fill="#444" font-family="monospace">FIRE DETECTION LOOP B</text>
+            <text x="75" y="90" text-anchor="middle" font-size="7" fill="#666" font-family="monospace">Sensing element — Nacelle</text>
+            <line x1="140" y1="30" x2="180" y2="55" stroke="#777" stroke-width="0.8"/>
+            <line x1="140" y1="82" x2="180" y2="55" stroke="#777" stroke-width="0.8"/>
+            <rect x="180" y="38" width="100" height="34" rx="3" fill="none" stroke="#555" stroke-width="0.8"/>
+            <text x="230" y="52" text-anchor="middle" font-size="8" fill="#444" font-family="monospace">CONTROL MODULE</text>
+            <text x="230" y="63" text-anchor="middle" font-size="7" fill="#666" font-family="monospace">AND gate logic</text>
+            <line x1="280" y1="55" x2="310" y2="55" stroke="#CC0000" stroke-width="1" marker-end="url(#arr)"/>
+            <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6Z" fill="#CC0000"/></marker></defs>
+            <text x="312" y="58" font-size="7" fill="#CC0000" font-family="monospace">FIRE</text>
+          </svg>
+        </div>
+        <p>2.70.10.3 THRUST LEVER — The affected engine thrust lever must be moved to the IDLE detent as a first action to reduce fuel and hydraulic fluid flow to the nacelle. This action must be accomplished before the ENG MASTER is set to OFF to ensure correct sequencing of the procedure and avoid uncommanded engine shutdown.</p>
+        <p>2.70.10.4 AGENT DISCHARGE — Two extinguishing agents (AGENT 1 and AGENT 2) are available per engine. AGENT 1 should be discharged first. If the fire warning persists after 30 seconds, AGENT 2 may be discharged. After both agents have been used, no further extinguishing capability is available.</p>
+        <p>2.70.10.5 POSTFIRE CHECKS — Following confirmed engine fire extinction, the crew should monitor for rekindling, observe EGT trends, and consider diversion to the nearest suitable aerodrome. The APU may be started as applicable to supplement electrical and pneumatic power from the single operating engine.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal overlay -->
+  <div class="modal-overlay">
+    <div class="modal">
+
+      <!-- ── MODAL HEADER ── -->
+      <div class="modal-header">
+        <div class="warning-strip"></div>
+        <div class="warning-icon">
+          <svg class="tri-warn" width="24" height="22" viewBox="0 0 24 22" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="12,1 23,21 1,21" fill="#E83030"/>
+            <text x="12" y="18" text-anchor="middle" dominant-baseline="auto"
+                  font-size="11" font-weight="700" fill="#1A1A1A"
+                  font-family="'Barlow Condensed', sans-serif">!</text>
+          </svg>
+        </div>
+        <div class="warning-title-block">
+          <div class="warning-level">● Level 3 Warning</div>
+          <div class="warning-title">ENG 1 FIRE</div>
+        </div>
+        <div class="modal-header-meta">
+          <div class="meta-item">
+            <span class="meta-label">Aircraft</span>
+            <span class="meta-value">A320-214</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Engine</span>
+            <span class="meta-value red">ENG 1</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Rev.</span>
+            <span class="meta-value">47</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Ref.</span>
+            <span class="meta-value">FCOM 2.70.10</span>
+          </div>
+        </div>
+        <div class="modal-close">✕</div>
+      </div>
+
+      <!-- ── MODAL BODY ── -->
+      <div class="modal-body">
+
+        <!-- LEFT: Schematic -->
+        <div class="schematic-panel">
+          <div class="panel-header">
+            <div class="panel-dot active"></div>
+            <span class="panel-label" id="diagram-label">Center Pedestal — Thrust Levers</span>
+          </div>
+          <div class="schematic-area">
+
+            <!-- ══════ DIAGRAM: PEDESTAL (steps 1–3) ══════ -->
+            <div id="diagram-pedestal" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+              <svg width="100%" height="100%" viewBox="0 0 340 520" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="max-height:100%;display:block;">
+
+                <!-- Pedestal outline -->
+                <rect x="60" y="20" width="220" height="480" rx="10" fill="#1C1C1E" stroke="#505050" stroke-width="1.5"/>
+                <line x1="70" y1="40"  x2="270" y2="40"  stroke="#2E2E2E" stroke-width="0.5"/>
+                <line x1="70" y1="380" x2="270" y2="380" stroke="#2E2E2E" stroke-width="0.5"/>
+
+                <!-- Throttle quadrant -->
+                <rect x="72" y="44" width="196" height="310" rx="4" fill="#141416" stroke="#3C3C3C" stroke-width="1"/>
+
+                <!-- Detent labels (grey, always visible) -->
+                <text x="54" y="76"  text-anchor="end" fill="#606060" font-size="9" font-family="'Share Tech Mono', monospace">TOGA</text>
+                <text x="54" y="120" text-anchor="end" fill="#606060" font-size="9" font-family="'Share Tech Mono', monospace">FLX/MCT</text>
+                <text x="54" y="178" text-anchor="end" fill="#606060" font-size="9" font-family="'Share Tech Mono', monospace">CLB</text>
+                <text x="54" y="258" text-anchor="end" fill="#606060" font-size="9" font-family="'Share Tech Mono', monospace">CL</text>
+                <text x="54" y="318" text-anchor="end" fill="#606060" font-size="9" font-family="'Share Tech Mono', monospace" letter-spacing="0.3px">IDLE</text>
+
+                <!-- Detent lines -->
+                <line x1="56" y1="71"  x2="86" y2="71"  stroke="#3A3A3A" stroke-width="0.8"/>
+                <line x1="56" y1="115" x2="86" y2="115" stroke="#3A3A3A" stroke-width="0.8"/>
+                <line x1="56" y1="173" x2="86" y2="173" stroke="#3A3A3A" stroke-width="0.8"/>
+                <line x1="56" y1="253" x2="86" y2="253" stroke="#3A3A3A" stroke-width="0.8"/>
+                <line x1="56" y1="313" x2="86" y2="313" stroke="#3A3A3A" stroke-width="0.8"/>
+
+                <!-- TL1 track + notches -->
+                <rect x="86" y="60" width="22" height="260" rx="3" fill="#0E0E10" stroke="#383838" stroke-width="0.8"/>
+                <rect x="84" y="69"  width="26" height="4" rx="1" fill="#2C2C2E"/>
+                <rect x="84" y="113" width="26" height="4" rx="1" fill="#2C2C2E"/>
+                <rect x="84" y="171" width="26" height="4" rx="1" fill="#2C2C2E"/>
+                <rect x="84" y="251" width="26" height="4" rx="1" fill="#2C2C2E"/>
+                <rect x="84" y="311" width="26" height="5" rx="1" fill="#3A3A3A" stroke="#555" stroke-width="0.5"/>
+
+                <!-- TL2 track + notches -->
+                <rect x="232" y="60" width="22" height="260" rx="3" fill="#0E0E10" stroke="#383838" stroke-width="0.8"/>
+                <rect x="230" y="69"  width="26" height="4" rx="1" fill="#2C2C2E"/>
+                <rect x="230" y="113" width="26" height="4" rx="1" fill="#2C2C2E"/>
+                <rect x="230" y="171" width="26" height="4" rx="1" fill="#2C2C2E"/>
+                <rect x="230" y="251" width="26" height="4" rx="1" fill="#2C2C2E"/>
+                <rect x="230" y="311" width="26" height="5" rx="1" fill="#3A3A3A" stroke="#555" stroke-width="0.5"/>
+
+                <!-- TL1 handle -->
+                <rect x="80" y="240" width="34" height="52" rx="5" fill="#2A2A2C" stroke="#505050" stroke-width="1.2"/>
+                <rect x="84" y="246" width="26" height="4" rx="1" fill="#1E1E20" opacity="0.8"/>
+                <rect x="84" y="254" width="26" height="4" rx="1" fill="#1E1E20" opacity="0.8"/>
+                <rect x="84" y="262" width="26" height="4" rx="1" fill="#1E1E20" opacity="0.8"/>
+                <rect x="84" y="270" width="26" height="4" rx="1" fill="#1E1E20" opacity="0.8"/>
+                <text x="97" y="285" text-anchor="middle" fill="#909090" font-size="9" font-family="'Share Tech Mono', monospace">1</text>
+
+                <!-- TL2 handle -->
+                <rect x="226" y="240" width="34" height="52" rx="5" fill="#2A2A2C" stroke="#505050" stroke-width="1.2"/>
+                <rect x="230" y="246" width="26" height="4" rx="1" fill="#1E1E20" opacity="0.8"/>
+                <rect x="230" y="254" width="26" height="4" rx="1" fill="#1E1E20" opacity="0.8"/>
+                <rect x="230" y="262" width="26" height="4" rx="1" fill="#1E1E20" opacity="0.8"/>
+                <rect x="230" y="270" width="26" height="4" rx="1" fill="#1E1E20" opacity="0.8"/>
+                <text x="243" y="285" text-anchor="middle" fill="#909090" font-size="9" font-family="'Share Tech Mono', monospace">2</text>
+
+                <!-- Centre divider -->
+                <rect x="130" y="60" width="80" height="260" rx="4" fill="#141416" stroke="#303030" stroke-width="0.5"/>
+
+                <!-- TL labels (grey base) -->
+                <text x="97"  y="226" text-anchor="middle" fill="#606060" font-size="10" font-family="'Share Tech Mono', monospace">TL 1</text>
+                <text x="243" y="226" text-anchor="middle" fill="#606060" font-size="10" font-family="'Share Tech Mono', monospace">TL 2</text>
+
+                <!-- Zone separator -->
+                <line x1="86" y1="355" x2="254" y2="355" stroke="#303030" stroke-width="0.5"/>
+
+                <!-- ENG MASTER 1 (left of speedbrake) -->
+                <rect x="80" y="368" width="44" height="24" rx="3" fill="#222224" stroke="#404040" stroke-width="1"/>
+                <circle cx="88" cy="376" r="3" fill="#1A4A1A" stroke="#2A6A2A" stroke-width="0.5"/>
+                <text x="98" y="378" fill="#505050" font-size="7" font-family="'Share Tech Mono', monospace">ENG</text>
+                <text x="98" y="387" fill="#505050" font-size="7" font-family="'Share Tech Mono', monospace">MST 1</text>
+
+                <!-- ENG MASTER 2 (right of speedbrake) -->
+                <rect x="216" y="368" width="44" height="24" rx="3" fill="#222224" stroke="#404040" stroke-width="1"/>
+                <circle cx="224" cy="376" r="3" fill="#1A4A1A" stroke="#2A6A2A" stroke-width="0.5"/>
+                <text x="236" y="378" fill="#505050" font-size="7" font-family="'Share Tech Mono', monospace">ENG</text>
+                <text x="236" y="387" fill="#505050" font-size="7" font-family="'Share Tech Mono', monospace">MST 2</text>
+
+                <!-- Speedbrake -->
+                <rect x="161" y="358" width="18" height="72" rx="2" fill="#0E0E10" stroke="#2C2C2C" stroke-width="0.8"/>
+                <rect x="156" y="362" width="28" height="20" rx="3" fill="#262628" stroke="#484848" stroke-width="1"/>
+                <text x="170" y="376" text-anchor="middle" dominant-baseline="central" fill="#606060" font-size="6" font-family="'Share Tech Mono', monospace">SPD BRK</text>
+
+                <!-- ENG FIRE P/B area -->
+                <rect x="72" y="442" width="196" height="46" rx="4" fill="#141416" stroke="#3C3C3C" stroke-width="1"/>
+                <text x="170" y="453" text-anchor="middle" fill="#606060" font-size="8" font-family="'Share Tech Mono', monospace" letter-spacing="0.5">ENG FIRE P/B</text>
+                <rect x="90"  y="458" width="60" height="24" rx="3" fill="#8B1010" stroke="#CC2020" stroke-width="1.5"/>
+                <text x="120" y="470" text-anchor="middle" fill="#FFB0B0" font-size="8" font-family="'Share Tech Mono', monospace" font-weight="bold">ENG 1</text>
+                <text x="120" y="479" text-anchor="middle" fill="#FFB0B0" font-size="7" font-family="'Share Tech Mono', monospace">FIRE</text>
+                <rect x="190" y="458" width="60" height="24" rx="3" fill="#222224" stroke="#404040" stroke-width="1"/>
+                <text x="220" y="470" text-anchor="middle" fill="#505050" font-size="8" font-family="'Share Tech Mono', monospace">ENG 2</text>
+                <text x="220" y="479" text-anchor="middle" fill="#505050" font-size="7" font-family="'Share Tech Mono', monospace">FIRE</text>
+
+                <!-- ── HIGHLIGHT: Step 1 — TL1 + IDLE ── -->
+                <g id="hl-tl1">
+                  <circle cx="97" cy="266" r="36" fill="none" stroke="#FF8C00" stroke-width="2.5" opacity="0.9" stroke-dasharray="6 3" class="attention-ring"/>
+                  <circle cx="97" cy="266" r="28" fill="rgba(255,140,0,0.06)" stroke="#FF8C00" stroke-width="1.5" opacity="0.7" class="attention-ring"/>
+                  <text x="97" y="226" text-anchor="middle" fill="#FF8C00" font-size="10" font-family="'Share Tech Mono', monospace" font-weight="bold">TL 1</text>
+                  <text x="54" y="318" text-anchor="end" fill="#FF8C00" font-size="9" font-family="'Share Tech Mono', monospace" letter-spacing="0.3px" font-weight="700">IDLE</text>
+                  <rect x="30" y="307" width="26" height="16" rx="2" fill="none" stroke="#FF8C00" stroke-width="1.5" class="attention-ring"/>
+                </g>
+
+                <!-- ── HIGHLIGHT: Step 2 — ENG MASTER 1 ── -->
+                <g id="hl-master1" style="display:none">
+                  <rect x="76" y="364" width="52" height="32" rx="5" fill="rgba(255,140,0,0.05)" stroke="#FF8C00" stroke-width="2" stroke-dasharray="5 3" class="attention-ring"/>
+                  <circle cx="88" cy="376" r="3" fill="#00D870" stroke="#00A050" stroke-width="0.5"/>
+                  <text x="98" y="378" fill="#FF8C00" font-size="7" font-family="'Share Tech Mono', monospace" font-weight="bold">ENG</text>
+                  <text x="98" y="387" fill="#FF8C00" font-size="7" font-family="'Share Tech Mono', monospace" font-weight="bold">MST 1</text>
+                </g>
+
+                <!-- ── HIGHLIGHT: Step 3 — ENG 1 FIRE P/B ── -->
+                <g id="hl-fire1" style="display:none">
+                  <rect x="84" y="452" width="72" height="36" rx="6" fill="rgba(232,48,48,0.08)" stroke="#E83030" stroke-width="2.5" stroke-dasharray="6 3" class="attention-ring"/>
+                </g>
+
+              </svg>
+            </div>
+
+            <!-- ══════ DIAGRAM: OVERHEAD PANEL (steps 4–5) ══════ -->
+            <div id="diagram-overhead" style="width:100%;height:100%;display:none;align-items:center;justify-content:center;">
+              <svg width="100%" height="100%" viewBox="0 0 340 280" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="max-height:100%;display:block;">
+
+                <!-- Panel body -->
+                <rect x="30" y="14" width="280" height="252" rx="8" fill="#1A1A1C" stroke="#505050" stroke-width="1.5"/>
+                <!-- Title strip -->
+                <rect x="30" y="14" width="280" height="28" rx="8" fill="#141416" stroke="#505050" stroke-width="0.5"/>
+                <rect x="30" y="30" width="280" height="12" fill="#141416"/>
+                <text x="170" y="32" text-anchor="middle" fill="#909090" font-size="9" font-family="'Share Tech Mono', monospace" letter-spacing="1.5">FIRE — AGENT DISCHARGE</text>
+
+                <!-- Column divider -->
+                <line x1="170" y1="46" x2="170" y2="258" stroke="#303030" stroke-width="0.5"/>
+
+                <!-- ENG 1 column label -->
+                <text x="100" y="60" text-anchor="middle" fill="#C06060" font-size="10" font-family="'Share Tech Mono', monospace" font-weight="bold" letter-spacing="1">ENG 1</text>
+
+                <!-- AGENT 1 — ENG 1 -->
+                <rect x="48" y="68" width="104" height="52" rx="4" fill="#1E1E20" stroke="#404040" stroke-width="1"/>
+                <rect x="52" y="72" width="96" height="34" rx="3" fill="#141416" stroke="#303030" stroke-width="0.5"/>
+                <text x="100" y="93"  text-anchor="middle" fill="#9090A0" font-size="9" font-family="'Share Tech Mono', monospace">AGENT 1</text>
+                <text x="100" y="104" text-anchor="middle" fill="#6060A0" font-size="8" font-family="'Share Tech Mono', monospace" letter-spacing="0.5">DISCH</text>
+                <circle cx="100" cy="113" r="3" fill="#2A2A40" stroke="#404060" stroke-width="0.5"/>
+
+                <!-- AGENT 2 — ENG 1 -->
+                <rect x="48" y="134" width="104" height="52" rx="4" fill="#1E1E20" stroke="#404040" stroke-width="1"/>
+                <rect x="52" y="138" width="96" height="34" rx="3" fill="#141416" stroke="#303030" stroke-width="0.5"/>
+                <text x="100" y="159" text-anchor="middle" fill="#9090A0" font-size="9" font-family="'Share Tech Mono', monospace">AGENT 2</text>
+                <text x="100" y="170" text-anchor="middle" fill="#6060A0" font-size="8" font-family="'Share Tech Mono', monospace" letter-spacing="0.5">DISCH</text>
+                <circle cx="100" cy="179" r="3" fill="#2A2A40" stroke="#404060" stroke-width="0.5"/>
+
+                <!-- Bottles status -->
+                <text id="bottles-eng1" x="100" y="210" text-anchor="middle" fill="#606060" font-size="7" font-family="'Share Tech Mono', monospace">BOTTLES: 2 AVAIL</text>
+
+                <!-- ENG 2 column label (dimmed) -->
+                <text x="240" y="60" text-anchor="middle" fill="#505060" font-size="10" font-family="'Share Tech Mono', monospace" letter-spacing="1">ENG 2</text>
+
+                <!-- AGENT 1 — ENG 2 (dimmed) -->
+                <rect x="188" y="68" width="104" height="52" rx="4" fill="#181818" stroke="#303030" stroke-width="0.5"/>
+                <rect x="192" y="72" width="96" height="34" rx="3" fill="#121212" stroke="#282828" stroke-width="0.5"/>
+                <text x="240" y="93"  text-anchor="middle" fill="#404040" font-size="9" font-family="'Share Tech Mono', monospace">AGENT 1</text>
+                <text x="240" y="104" text-anchor="middle" fill="#303050" font-size="8" font-family="'Share Tech Mono', monospace" letter-spacing="0.5">DISCH</text>
+                <circle cx="240" cy="113" r="3" fill="#1E1E28" stroke="#303040" stroke-width="0.5"/>
+
+                <!-- AGENT 2 — ENG 2 (dimmed) -->
+                <rect x="188" y="134" width="104" height="52" rx="4" fill="#181818" stroke="#303030" stroke-width="0.5"/>
+                <rect x="192" y="138" width="96" height="34" rx="3" fill="#121212" stroke="#282828" stroke-width="0.5"/>
+                <text x="240" y="159" text-anchor="middle" fill="#404040" font-size="9" font-family="'Share Tech Mono', monospace">AGENT 2</text>
+                <text x="240" y="170" text-anchor="middle" fill="#303050" font-size="8" font-family="'Share Tech Mono', monospace" letter-spacing="0.5">DISCH</text>
+                <circle cx="240" cy="179" r="3" fill="#1E1E28" stroke="#303040" stroke-width="0.5"/>
+
+                <text x="240" y="210" text-anchor="middle" fill="#404040" font-size="7" font-family="'Share Tech Mono', monospace">BOTTLES: 2 AVAIL</text>
+
+                <!-- ── HIGHLIGHT: Step 4 — AGENT 1 ENG 1 ── -->
+                <g id="hl-agent1" style="display:none">
+                  <rect x="43" y="63" width="114" height="62" rx="7" fill="rgba(255,140,0,0.06)" stroke="#FF8C00" stroke-width="2" stroke-dasharray="5 3" class="attention-ring"/>
+                  <circle cx="100" cy="113" r="3" fill="#FF8C00" stroke="#CC6600" stroke-width="0.5"/>
+                </g>
+
+                <!-- ── HIGHLIGHT: Step 5 — AGENT 2 ENG 1 ── -->
+                <g id="hl-agent2" style="display:none">
+                  <rect x="43" y="129" width="114" height="62" rx="7" fill="rgba(255,140,0,0.06)" stroke="#FF8C00" stroke-width="2" stroke-dasharray="5 3" class="attention-ring"/>
+                  <circle cx="100" cy="179" r="3" fill="#FF8C00" stroke="#CC6600" stroke-width="0.5"/>
+                </g>
+
+              </svg>
+            </div>
+
+            <!-- ══════ DIAGRAM: AIRPORT CHART (step 6) ══════ -->
+            <div id="diagram-airport" style="width:100%;height:100%;display:none;align-items:center;justify-content:center;">
+              <svg width="100%" height="100%" viewBox="0 0 340 380" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" style="max-height:100%;display:block;">
+
+                <!-- Chart paper background -->
+                <rect x="10" y="10" width="320" height="360" rx="4" fill="#E8E3D4" stroke="#C8C0A8" stroke-width="1"/>
+                <!-- Grid -->
+                <line x1="10"  y1="73"  x2="330" y2="73"  stroke="#C8BFA8" stroke-width="0.4"/>
+                <line x1="10"  y1="136" x2="330" y2="136" stroke="#C8BFA8" stroke-width="0.4"/>
+                <line x1="10"  y1="199" x2="330" y2="199" stroke="#C8BFA8" stroke-width="0.4"/>
+                <line x1="10"  y1="262" x2="330" y2="262" stroke="#C8BFA8" stroke-width="0.4"/>
+                <line x1="10"  y1="325" x2="330" y2="325" stroke="#C8BFA8" stroke-width="0.4"/>
+                <line x1="73"  y1="10"  x2="73"  y2="370" stroke="#C8BFA8" stroke-width="0.4"/>
+                <line x1="136" y1="10"  x2="136" y2="370" stroke="#C8BFA8" stroke-width="0.4"/>
+                <line x1="199" y1="10"  x2="199" y2="370" stroke="#C8BFA8" stroke-width="0.4"/>
+                <line x1="262" y1="10"  x2="262" y2="370" stroke="#C8BFA8" stroke-width="0.4"/>
+                <!-- Title strip -->
+                <rect x="10" y="10" width="320" height="22" rx="4" fill="#C8BFA0"/>
+                <rect x="10" y="24" width="320" height="8" fill="#C8BFA0"/>
+                <text x="170" y="24" text-anchor="middle" fill="#3A3020" font-size="9" font-weight="bold" font-family="'Share Tech Mono', monospace" letter-spacing="1">DIVERSION — NEAREST SUITABLE AERODROME</text>
+
+                <!-- Destination airport (top-right) -->
+                <circle cx="240" cy="135" r="46" fill="none" stroke="#705830" stroke-width="0.8" stroke-dasharray="4 3"/>
+                <!-- Runway 1 -->
+                <rect x="226" y="99" width="14" height="72" rx="2" fill="#888070" stroke="#706050" stroke-width="0.5" transform="rotate(-8 233 135)"/>
+                <line x1="233" y1="107" x2="233" y2="113" stroke="#E8E0D0" stroke-width="1" transform="rotate(-8 233 135)"/>
+                <line x1="233" y1="157" x2="233" y2="163" stroke="#E8E0D0" stroke-width="1" transform="rotate(-8 233 135)"/>
+                <!-- Runway 2 -->
+                <rect x="202" y="128" width="76" height="12" rx="2" fill="#888070" stroke="#706050" stroke-width="0.5" transform="rotate(-8 240 134)"/>
+                <!-- Aircraft symbol at airport -->
+                <text x="240" y="138" text-anchor="middle" dominant-baseline="central" fill="#3A3020" font-size="12" font-family="sans-serif">✈</text>
+                <text x="240" y="193" text-anchor="middle" fill="#3A3020" font-size="8" font-weight="bold" font-family="'Share Tech Mono', monospace">DEST</text>
+
+                <!-- Own aircraft (bottom-left) -->
+                <polygon points="80,300 72,316 88,316" fill="#E83030" stroke="#B02020" stroke-width="1"/>
+                <text x="80" y="326" text-anchor="middle" fill="#B02020" font-size="7" font-family="'Share Tech Mono', monospace" font-weight="bold">A/C</text>
+                <text x="80" y="335" text-anchor="middle" fill="#3A3020" font-size="7" font-family="'Share Tech Mono', monospace">F-GKXS</text>
+
+                <!-- Dashed course line -->
+                <line x1="86" y1="298" x2="214" y2="168" stroke="#E83030" stroke-width="1.5" stroke-dasharray="8 4"/>
+                <polygon points="214,168 206,180 220,177" fill="#E83030"/>
+
+                <!-- Diversion annotation -->
+                <rect x="118" y="218" width="72" height="30" rx="3" fill="#D8D0BA" stroke="#B0A888" stroke-width="0.5"/>
+                <text x="154" y="230" text-anchor="middle" fill="#3A3020" font-size="8" font-family="'Share Tech Mono', monospace" font-weight="bold">DIVERT</text>
+                <text x="154" y="241" text-anchor="middle" fill="#705830" font-size="7" font-family="'Share Tech Mono', monospace">HDG 040 / 58NM</text>
+
+                <!-- Compass rose -->
+                <circle cx="296" cy="342" r="22" fill="none" stroke="#908070" stroke-width="0.8"/>
+                <line x1="296" y1="320" x2="296" y2="327" stroke="#3A3020" stroke-width="1.5"/>
+                <text x="296" y="318" text-anchor="middle" fill="#3A3020" font-size="8" font-weight="bold" font-family="'Share Tech Mono', monospace">N</text>
+                <line x1="296" y1="364" x2="296" y2="357" stroke="#706050" stroke-width="0.8"/>
+                <line x1="274" y1="342" x2="281" y2="342" stroke="#706050" stroke-width="0.8"/>
+                <line x1="318" y1="342" x2="311" y2="342" stroke="#706050" stroke-width="0.8"/>
+
+              </svg>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- RIGHT: Checklist -->
+        <div class="checklist-panel">
+          <div class="panel-header">
+            <span class="panel-label">Emergency Procedure</span>
+          </div>
+
+          <div class="checklist-body">
+
+            <div class="cl-section-label">Immediate Actions</div>
+
+            <!-- Step 1 — ACTIVE -->
+            <div class="cl-item active" id="step1">
+              <div class="cl-checkbox" id="cb1" onclick="completeStep(1)" title="Mark complete"></div>
+              <span class="cl-num">1</span>
+              <span class="cl-name" id="name1">THR LEVER 1</span>
+              <span class="cl-dots">· · · · · · · · · · · ·</span>
+              <span class="cl-action cyan" id="act1">IDLE</span>
+            </div>
+            <div class="cl-status" id="status1">▶ Waiting for action...</div>
+
+            <!-- Step 2 -->
+            <div class="cl-item" id="step2" style="opacity:0.4;">
+              <div class="cl-checkbox" id="cb2" onclick="completeStep(2)"></div>
+              <span class="cl-num">2</span>
+              <span class="cl-name" id="name2">ENG MASTER 1</span>
+              <span class="cl-dots">· · · · · · · · · · · ·</span>
+              <span class="cl-action blue" id="act2">OFF</span>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="cl-item" id="step3" style="opacity:0.4;">
+              <div class="cl-checkbox" id="cb3" onclick="completeStep(3)"></div>
+              <span class="cl-num">3</span>
+              <span class="cl-name" id="name3">ENG 1 FIRE P/B</span>
+              <span class="cl-dots">· · · · · · · · · · · ·</span>
+              <span class="cl-action blue" id="act3">PUSH</span>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="cl-item" id="step4" style="opacity:0.4;">
+              <div class="cl-checkbox" id="cb4" onclick="completeStep(4)"></div>
+              <span class="cl-num">4</span>
+              <span class="cl-name" id="name4">AGENT 1</span>
+              <span class="cl-dots">· · · · · · · · · · · ·</span>
+              <span class="cl-action blue" id="act4">DISCH</span>
+            </div>
+
+            <div class="cl-section-label" style="margin-top:8px;">If Fire Persists After 30 s</div>
+
+            <!-- Step 5 (conditional) -->
+            <div class="cl-item" id="step5" style="opacity:0.3;">
+              <div class="cl-checkbox" id="cb5" onclick="completeStep(5)"></div>
+              <span class="cl-num">5</span>
+              <span class="cl-name" id="name5">AGENT 2</span>
+              <span class="cl-dots">· · · · · · · · · · · ·</span>
+              <span class="cl-action blue" id="act5">DISCH</span>
+            </div>
+
+            <div class="cl-section-label" style="margin-top:8px;">Subsequent Actions</div>
+
+            <!-- Step 6 -->
+            <div class="cl-item" id="step6" style="opacity:0.3;">
+              <div class="cl-checkbox" id="cb6" onclick="completeStep(6)"></div>
+              <span class="cl-num">6</span>
+              <span class="cl-name" id="name6">LAND ASAP</span>
+              <span class="cl-dots">· · · · · · · · · · · ·</span>
+              <span class="cl-action blue" id="act6">CONFIRM</span>
+            </div>
+
+          </div>
+
+          <!-- ── MODAL FOOTER ── -->
+          <div class="modal-footer">
+            <button class="footer-btn" onclick="prevStep()">◀ Prev</button>
+            <button class="footer-btn primary" onclick="nextStep()">Next Step ▶</button>
+            <button class="footer-btn" onclick="resetSteps()">Reset</button>
+            <div class="footer-progress">
+              <span class="progress-label">Progress</span>
+              <div class="progress-track">
+                <div class="progress-fill" id="progress"></div>
+              </div>
+              <span class="step-counter" id="stepctr">0 / 6</span>
+            </div>
+          </div>
+
+        </div><!-- /checklist-panel -->
+      </div><!-- /modal-body -->
+
+      <!-- ── ALERT CLEARED SCREEN ── -->
+      <div class="cleared-screen" id="cleared-screen">
+        <div class="cleared-icon">✓</div>
+        <div class="cleared-title">Alert Cleared</div>
+        <div class="cleared-sub">ENG 1 FIRE — All actions completed</div>
+        <div class="cleared-meta">
+          <div class="cleared-meta-item">
+            <span class="cleared-meta-label">Aircraft</span>
+            <span class="cleared-meta-value">F-GKXS</span>
+          </div>
+          <div class="cleared-meta-item">
+            <span class="cleared-meta-label">Ref.</span>
+            <span class="cleared-meta-value">FCOM 2.70.10</span>
+          </div>
+        </div>
+        <button class="footer-btn" style="margin-top:16px;" onclick="resetSteps()">↺ Reset Simulation</button>
+      </div>
+
+    </div><!-- /modal -->
+  </div><!-- /modal-overlay -->
+  <div class="statusbar">
+    <div class="sb-item" id="sb-alert"><div class="sb-dot warn" id="sb-dot"></div> <span id="sb-alert-text">ENG 1 FIRE — ACTIVE</span></div>
+    <div class="sb-item"><div class="sb-dot"></div> Connected</div>
+    <div class="sb-item">A320-214 &nbsp;|&nbsp; F-GKXS</div>
+    <div class="sb-item">FCOM Rev. 47</div>
+    <div class="sb-item" style="margin-left:auto; color:#606060;">09:41 UTC</div>
+  </div>
+
+</div><!-- /workspace -->
+
+<script>
+  let currentStep = 1;
+  const totalSteps = 6;
+
+  const diagramLabels = {
+    1: 'Center Pedestal — Thrust Levers',
+    2: 'Center Pedestal — Engine Master',
+    3: 'Center Pedestal — ENG 1 Fire P/B',
+    4: 'Overhead Panel — Agent 1 Discharge',
+    5: 'Overhead Panel — Agent 2 Discharge',
+    6: 'Navigation — Divert to Nearest Aerodrome'
+  };
+  const diagramMap = {
+    1: 'diagram-pedestal', 2: 'diagram-pedestal', 3: 'diagram-pedestal',
+    4: 'diagram-overhead',  5: 'diagram-overhead',
+    6: 'diagram-airport'
+  };
+  const highlightMap = {
+    1: ['hl-tl1'], 2: ['hl-master1'], 3: ['hl-fire1'],
+    4: ['hl-agent1'], 5: ['hl-agent2'], 6: []
+  };
+  const allDiagramIds   = ['diagram-pedestal','diagram-overhead','diagram-airport'];
+  const allHighlightIds = ['hl-tl1','hl-master1','hl-fire1','hl-agent1','hl-agent2'];
+
+  function showDiagram(step) {
+    const label = document.getElementById('diagram-label');
+    if (label) label.textContent = diagramLabels[step] || '';
+    const target     = diagramMap[step];
+    const activeHLs  = highlightMap[step] || [];
+    allDiagramIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = (id === target) ? 'flex' : 'none';
+    });
+    allHighlightIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = activeHLs.includes(id) ? '' : 'none';
+    });
+  }
+
+  // ── Update BOTTLES counter on overhead panel
+  function updateBottles() {
+    const b1done = document.getElementById('cb4').classList.contains('checked');
+    const b2done = document.getElementById('cb5').classList.contains('checked');
+    const remaining = (b1done ? 0 : 1) + (b2done ? 0 : 1);
+    const el = document.getElementById('bottles-eng1');
+    if (!el) return;
+    el.textContent = 'BOTTLES: ' + remaining + ' AVAIL';
+    el.setAttribute('fill', remaining === 0 ? '#804040' : '#606060');
+  }
+  function deactivateStep(n) {
+    const item = document.getElementById('step' + n);
+    const act  = document.getElementById('act' + n);
+    const st   = document.getElementById('status' + n);
+    if (!item) return;
+    item.classList.remove('active');
+    if (act) { act.classList.remove('cyan'); act.classList.add('blue'); }
+    if (st)  st.remove();
+  }
+
+  // ── Undo a completed step (restore it to pending state)
+  function undoStep(n) {
+    const item = document.getElementById('step' + n);
+    const cb   = document.getElementById('cb' + n);
+    const name = document.getElementById('name' + n);
+    const act  = document.getElementById('act' + n);
+    if (!item) return;
+    cb.classList.remove('checked');
+    item.style.opacity = '0.4';
+    if (name) name.classList.remove('done');
+    if (act)  { act.classList.remove('done-color', 'cyan'); act.classList.add('blue'); }
+    updateBottles();
+  }
+
+  // ── Mark step n as done (completed state, dimmed)
+  function completeStep(n) {
+    if (n !== currentStep) return;
+    const item = document.getElementById('step' + n);
+    const cb   = document.getElementById('cb' + n);
+    const name = document.getElementById('name' + n);
+    const act  = document.getElementById('act' + n);
+    const st   = document.getElementById('status' + n);
+    cb.classList.add('checked');
+    item.classList.remove('active');
+    item.style.opacity = '0.5';
+    if (name) name.classList.add('done');
+    if (act)  { act.classList.remove('cyan', 'blue'); act.classList.add('done-color'); }
+    if (st)   st.remove();
+    currentStep++;
+    updateProgress();
+    activateStep(currentStep);
+    updateBottles();
+    if (currentStep > totalSteps) showCleared();
+  }
+
+  function showCleared() {
+    document.getElementById('cleared-screen').classList.add('visible');
+    document.getElementById('sb-dot').classList.remove('warn');
+    document.getElementById('sb-alert-text').textContent = 'NO ALERTS';
+  }
+
+  function hideCleared() {
+    document.getElementById('cleared-screen').classList.remove('visible');
+    document.getElementById('sb-dot').classList.add('warn');
+    document.getElementById('sb-alert-text').textContent = 'ENG 1 FIRE — ACTIVE';
+  }
+
+  function nextStep() { if (currentStep <= totalSteps) completeStep(currentStep); }
+
+  function prevStep() {
+    if (currentStep <= 1) return;
+    deactivateStep(currentStep);
+    currentStep--;
+    undoStep(currentStep);
+    activateStep(currentStep);
+    updateProgress();
+  }
+
+  function resetSteps() {
+    deactivateStep(currentStep);
+    for (let n = 1; n <= totalSteps; n++) {
+      const item = document.getElementById('step' + n);
+      const cb   = document.getElementById('cb' + n);
+      const name = document.getElementById('name' + n);
+      const act  = document.getElementById('act' + n);
+      const st   = document.getElementById('status' + n);
+      if (!item) continue;
+      cb.classList.remove('checked');
+      item.classList.remove('active');
+      item.style.opacity = '0.4';
+      if (name) name.classList.remove('done');
+      if (act)  { act.classList.remove('done-color', 'cyan'); act.classList.add('blue'); }
+      if (st)   st.remove();
+    }
+    currentStep = 1;
+    updateProgress();
+    activateStep(1);
+    updateBottles();
+    hideCleared();
+  }
+
+  // ── Apply focus + switch diagram
+  function activateStep(n) {
+    if (n > totalSteps) return;
+    const item = document.getElementById('step' + n);
+    const act  = document.getElementById('act' + n);
+    if (!item) return;
+    item.classList.add('active');
+    item.style.opacity = '1';
+    if (act) { act.classList.remove('blue', 'done-color'); act.classList.add('cyan'); }
+    const st = document.createElement('div');
+    st.id = 'status' + n;
+    st.className = 'cl-status';
+    st.textContent = '▶ Waiting for action...';
+    item.insertAdjacentElement('afterend', st);
+    showDiagram(n);
+  }
+
+  function updateProgress() {
+    const done = currentStep - 1;
+    const pct  = Math.round((done / totalSteps) * 100);
+    document.getElementById('progress').style.width = pct + '%';
+    document.getElementById('stepctr').textContent = done + ' / ' + totalSteps;
+  }
+</script>
+</body>
+</html>
